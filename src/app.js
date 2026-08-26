@@ -1,5 +1,5 @@
 import express from "express"
-import cors from cors
+import cors from "cors"
 import cookieParser from "cookie-parser"
 
 
@@ -15,7 +15,11 @@ app.use(express.urlencoded({extended:true, limit:"16kb"})) //this is use to get 
 app .use(express.static("public")) // this is for images or file or any thing to store in our device
 app.use(cookieParser()) //this is for cookis from userbrowser
 
+// Routes import 
+import userRouter from './routes/user.routes.js'
 
+//routes decleration
+app.use("/api/v1/users", userRouter)
 
 // app.use(express.json())
 export {app}
