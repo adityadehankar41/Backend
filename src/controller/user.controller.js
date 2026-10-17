@@ -15,7 +15,7 @@ const registerUser = asyncHandler( async(req, res)=>{
      //check for user creation
      // return res 
 
-    const {fullName, email, username, passward} = req.body
+    const {fullName, email, username, password} = req.body
     console.log("email: ", email)
 
     // if (fullName=== ""){
@@ -23,43 +23,50 @@ const registerUser = asyncHandler( async(req, res)=>{
     // }
 
     if (
-        [fullName, email,username,passward].some((field)=>field?.trim() === "")
+        [fullName, email,username,password].some((field)=>field?.trim() === "")
     ){
-        throw new ApiError(400, "All friels are required ")
+        throw new ApiError(400, "All fields are required ")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username},{email}]
     })
 
     if (existedUser){
         throw new ApiError(409, "user alredy exist ")
-    }
+    } 
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const CoverImageLocalPath =req.files?.coverImage[0]?.path
-
-    if (!avatarLocalPath){
-        throw new ApiError(400,"Avatar file is require ")
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage)&& req.files.coverImage.length >0){
+        coverImageLocalPath = req.files.coverImage[0].path
     }
+    
+    
+    if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is required..........");
+}
+
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(CoverImageLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
     if (!avatar){
-        throw new ApiError(400,"Avatar file is require ")
+        throw new ApiError(400,"Avatar file is require... ")
     }
+    
 
     const user = await User.create({
         fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email,
-        password,
+        password, 
         username: username.toLowerCase()
     })
 
-    const createdUser = User.findById(user._id).select(
+    const createdUser = await User.findById(user._id).select(
         "-password -refreshToken" //use to remove fild
     )
 
