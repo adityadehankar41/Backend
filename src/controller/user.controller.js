@@ -4,6 +4,26 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+
+// this is taken saperatily to use by others if require 
+const generateAccessAndRefereshTokens = async(userId)=>{
+    try {
+        const user = User.findById(userId)
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+
+        user.refreshToken = refreshToken  // this is use to add in user 
+        await user.save({validateBeforeSave: false}) //this is use to save refresht oken in database
+
+        return{accessToken, refreshToken}
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating refresh and access tolen")
+    }
+}
+
+
+
 const registerUser = asyncHandler( async(req, res)=>{
      // get user details from frontend 
      // validation - not empty
@@ -80,4 +100,91 @@ const registerUser = asyncHandler( async(req, res)=>{
 
 })
 
-export {registerUser}
+const loginUser = asyncHandler(async(req,res)=>{
+    // req body-> data
+    // username or email
+    // find this user 
+    // password check 
+    // access and refresh token 
+    // send cookie
+
+
+    const{email, username, password} = req.body
+
+    if (!username || !email ){
+        throw new ApiError(400, "username or email is require")
+    }
+
+    const user = await User.findOne({
+        $or: [{username},{email}]
+    })   // this is use to cehck wheather the exesting user is present or what and in this also we are able to use User because previously we have requested in body for info 
+
+    if (!user){
+        throw new ApiError(404, "user does not exist")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if (!isPasswordValid){
+        throw new ApiError(401, "Invalid user crediential")
+    }
+
+    const{accessToken,refreshToken} =  await generateAccessAndRefereshTokens(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken") // this is ise to send back detail to user 
+
+    // send cookies 
+    const options = {
+        httpOnlu:true,
+        secure: true
+    }  // this is us to modify by only server the cookies
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,accessToken,refreshToken
+            },
+            "User logged in Successfully"
+        )
+    )
+
+})
+
+const logoutUser = asyncHandler(async(req,res)=>{
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set:{
+                refreshToken: undefined
+            }
+        },
+        {
+            new: true  // in return response it will give new value 
+        }
+    )
+
+    const options = {
+        httpOnlu:true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken",option)
+    .clearCookie("refreshToken",option)
+    .json(new ApiResponse(200,{}, "user logout successfully"))
+})
+
+
+
+
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser
+}
