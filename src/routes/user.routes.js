@@ -2,7 +2,7 @@ import { Router } from "express";
 import { changeCurrentPassword, 
     getCurrentUser,
     
-getUserChannelProfile, getWatchHistory, loginUser, logoutUser, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controller/user.controller.js";
+getUserChannelProfile, getWatchHistory, loginUser, logoutUser, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, refreshAccessToken} from "../controller/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -36,7 +36,7 @@ router.route("/update-account").patch(verifyJWT,updateAccountDetails)  // patch 
 
 router.route("/avatar").patch(verifyJWT,upload.single("avatar"), updateUserAvatar)  //single is use to update the single unit only 
 
-router.route("/cover-image").patch(verifyJWT,upload.single("/coverImage"), updateUserCoverImage)
+router.route("/cover-image").patch(verifyJWT,upload.single("coverImage"), updateUserCoverImage)
 
 // as in this we have used params so use rout like this 
 router.route("/c/:username").get(verifyJWT,getUserChannelProfile)

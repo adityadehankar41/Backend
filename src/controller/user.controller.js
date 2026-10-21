@@ -7,6 +7,8 @@ import jwt from "jsonwebtoken"
 import { application } from "express";
 import { subscribe } from "node:diagnostics_channel";
 import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
 
 // this is taken saperatily to use by others if require 
@@ -198,7 +200,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
 const refreshAccessToken = asyncHandler(async(req,res)=>{
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
-    if(incomingRefreshToken){
+    if(!incomingRefreshToken){
         throw new ApiError(401,"unathorized request")
     }
 
@@ -215,7 +217,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
             throw new ApiError(401,"invalid refresh token")
         }
     
-        if (!incomingRefreshToken !== user?.refreshToken){
+        if (incomingRefreshToken !== user?.refreshToken){
             throw new ApiError(401, "refresh token is expire or used")
         }
     
@@ -305,6 +307,10 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
         throw new ApiError(400, "Avatar file is missing")
     }
 
+    const oldavatar = await User.findById(req.user?._id)
+
+    const oldAvatarUrl = oldavatar.avatar
+    
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if(!avatar.url){
@@ -320,9 +326,6 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
         {new:true}
     ).select("-password")
 
-    const oldavatar = await User.findById(req.user?._id)
-
-    const oldAvatarUrl = oldavatar.avatar
     if(oldAvatarUrl){
         const oldPublicId = oldAvatarUrl
         .split("/")
@@ -332,6 +335,8 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
         await cloudinary.uploader.destroy(oldPublicId);
 
     }
+
+
 
     return res
     .status(200)
@@ -447,7 +452,9 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
     // req.user._id   // this gives string of that id 
     const user = await User.aggregate([
         {
-            _id: new mongoose.Types.ObjectId(req.user._id)  // as in aggregation we can not use mongoose direcrly so we use this to get id 
+           $match:{
+             _id: new mongoose.Types.ObjectId(req.user._id)  // as in aggregation we can not use mongoose direcrly so we use this to get id 
+           }
 
         },
         {
