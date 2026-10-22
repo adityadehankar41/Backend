@@ -104,7 +104,7 @@ const registerUser = asyncHandler( async(req, res)=>{
         new ApiResponse(200, createdUser, "User registure successfully")
     )
 
-})
+}) 
 
 const loginUser = asyncHandler(async(req,res)=>{
     // req body-> data
@@ -176,8 +176,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshToken: undefined
+            $unset:{
+                refreshToken: 1   // remove the field from the document 
             }
         },
         {

@@ -54,7 +54,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     try {
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "image",
+            resource_type: "auto",
         });
 
         console.log("Image uploaded:", response.secure_url);
