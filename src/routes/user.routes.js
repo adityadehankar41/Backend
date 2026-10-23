@@ -5,7 +5,7 @@ import { changeCurrentPassword,
 getUserChannelProfile, getWatchHistory, loginUser, logoutUser, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage, refreshAccessToken} from "../controller/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { video } from "../controller/video.controller.js";
+
 
 const router = Router()
 
@@ -44,19 +44,6 @@ router.route("/c/:username").get(verifyJWT,getUserChannelProfile)
 
 router.route("/history").get(verifyJWT, getWatchHistory)
 
-router.route("/video").post(
-    verifyJWT,
-    upload.fields([
-        {
-            name: "video",
-            maxCount: 1
-        },{
-            name:"thumbnail",
-            maxCount:1
-        }
-    ]),
-    video
-);
 
 
 export default router

@@ -17,9 +17,11 @@ app.use(cookieParser()) //this is for cookis from userbrowser
 
 // Routes import 
 import userRouter from './routes/user.routes.js'
+import video from './routes/video.routes.js'
 
 //routes decleration
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/video", video)
 
 // app.use(express.json())
 export {app}
